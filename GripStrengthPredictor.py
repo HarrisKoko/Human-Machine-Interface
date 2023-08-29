@@ -33,20 +33,17 @@ class GripStrengthPredictor:
 
     def getDataset(self,path):
         # Import EMG dataset from Matlab as CSV file
+        dfs = []
         for filename in os.listdir(path):
             f = os.path.join(path, filename)
             # checking if it is a file
             if os.path.isfile(f):
                 print('Loading file: ',f)
                 mat_file = sio.loadmat(f)
-                print(mat_file.keys())
-                import pdb;pdb.set_trace()
                 last_entry = list(mat_file) [-1]
                 df = pd.DataFrame(mat_file[last_entry])
-                with tempfile.NamedTemporaryFile(mode='w', delete=False) as f:
-                    df.to_csv(f.name, index=False)
-                    print('Saved dataframe to', f.name)
-        #dataset = pd.read_csv('MuscleData.csv')
+                dfs.append(df.drop(columns=2))
+        self.dataset = pd.concat(dfs)
 
     def backwardsPropogation(self):
         inputDim = 1        # takes variable 'x' 
