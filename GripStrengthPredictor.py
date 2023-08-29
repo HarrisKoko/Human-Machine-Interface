@@ -1,5 +1,6 @@
 # Human Machine Interface Villanova Senior Design
 # This class builds a predictive model for human grip strength measured by EMG
+# https://towardsdatascience.com/linear-regression-with-pytorch-eb6dedead817
 
 # Required Imports for the following machine learning model
 import numpy as np
@@ -18,17 +19,34 @@ from sklearn.metrics import accuracy_score
 from sklearn.metrics import confusion_matrix
 import sklearn.metrics as s
 from math import sqrt
+import scipy.io as sio
+import os
+from collections import OrderedDict
+import tempfile
 
 class GripStrengthPredictor:
 
     def __init__(self,path):
+        pd.set_option('display.max_columns', None)
         self.dataset = self.getDataset(path)
 
 
     def getDataset(self,path):
         # Import EMG dataset from Matlab as CSV file
-        dataset = pd.read_csv('MuscleData.csv')
-        pd.set_option('display.max_columns', None)
+        for filename in os.listdir(path):
+            f = os.path.join(path, filename)
+            # checking if it is a file
+            if os.path.isfile(f):
+                print('Loading file: ',f)
+                mat_file = sio.loadmat(f)
+                print(mat_file.keys())
+                import pdb;pdb.set_trace()
+                last_entry = list(mat_file) [-1]
+                df = pd.DataFrame(mat_file[last_entry])
+                with tempfile.NamedTemporaryFile(mode='w', delete=False) as f:
+                    df.to_csv(f.name, index=False)
+                    print('Saved dataframe to', f.name)
+        #dataset = pd.read_csv('MuscleData.csv')
 
     def backwardsPropogation(self):
         inputDim = 1        # takes variable 'x' 
@@ -44,30 +62,30 @@ class GripStrengthPredictor:
         criterion = torch.nn.MSELoss() 
         optimizer = torch.optim.SGD(model.parameters(), lr=learningRate)
         for epoch in range(epochs):
-        # Converting inputs and labels to Variable
-        if torch.cuda.is_available():
-            inputs = Variable(torch.from_numpy(x_train).cuda())
-            labels = Variable(torch.from_numpy(y_train).cuda())
-        else:
-            inputs = Variable(torch.from_numpy(x_train))
-            labels = Variable(torch.from_numpy(y_train))
+            # Converting inputs and labels to Variable
+            if torch.cuda.is_available():
+                inputs = Variable(torch.from_numpy(x_train).cuda())
+                labels = Variable(torch.from_numpy(y_train).cuda())
+            else:
+                inputs = Variable(torch.from_numpy(x_train))
+                labels = Variable(torch.from_numpy(y_train))
 
-        # Clear gradient buffers because we don't want any gradient from previous epoch to carry forward, dont want to cummulate gradients
-        optimizer.zero_grad()
+            # Clear gradient buffers because we don't want any gradient from previous epoch to carry forward, dont want to cummulate gradients
+            optimizer.zero_grad()
 
-        # get output from the model, given the inputs
-        outputs = model(inputs)
+            # get output from the model, given the inputs
+            outputs = model(inputs)
 
-        # get loss for the predicted output
-        loss = criterion(outputs, labels)
-        print(loss)
-        # get gradients w.r.t to parameters
-        loss.backward()
+            # get loss for the predicted output
+            loss = criterion(outputs, labels)
+            print(loss)
+            # get gradients w.r.t to parameters
+            loss.backward()
 
-        # update parameters
-        optimizer.step()
+            # update parameters
+            optimizer.step()
 
-        print('epoch {}, loss {}'.format(epoch, loss.item()))
+            print('epoch {}, loss {}'.format(epoch, loss.item()))
 
     def forwardPropogation(self):
         with torch.no_grad(): # we don't need gradients in the testing phase
@@ -92,3 +110,9 @@ class linearRegression(torch.nn.Module):
         def forward(self, x):
             out = self.linear(x)
             return out
+
+def main():
+    a = GripStrengthPredictor('Datasets')
+    print('Done')
+
+main()
