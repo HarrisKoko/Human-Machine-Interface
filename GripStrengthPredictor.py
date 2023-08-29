@@ -4,7 +4,6 @@
 
 # Required Imports for the following machine learning model
 import numpy as np
-import json
 import pandas as pd
 import torch
 import torch.nn as nn
@@ -21,8 +20,6 @@ import sklearn.metrics as s
 from math import sqrt
 import scipy.io as sio
 import os
-from collections import OrderedDict
-import tempfile
 
 class GripStrengthPredictor:
 
