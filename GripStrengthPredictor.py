@@ -20,13 +20,15 @@ import sklearn.metrics as s
 from math import sqrt
 import scipy.io as sio
 import os
+from torch.autograd import Variable
 
 class GripStrengthPredictor:
 
     def __init__(self,path):
         pd.set_option('display.max_columns', None)
         self.dataset = self.getDataset(path)
-
+        self.splitData()
+        self.backwardsPropogation()
 
     def getDataset(self,path):
         # Import EMG dataset from Matlab as CSV file
@@ -40,58 +42,68 @@ class GripStrengthPredictor:
                 last_entry = list(mat_file) [-1]
                 df = pd.DataFrame(mat_file[last_entry])
                 dfs.append(df.drop(columns=2))
-        self.dataset = pd.concat(dfs)
+        return pd.concat(dfs)
+
+    def splitData(self, train_percent = 0.8):
+        x = self.dataset[0]
+        y = self.dataset[1]
+        # Use int for random_state to make reproducable test/train data. Otherwise, leave null.
+        self.x_train, self.x_test, self.y_train, self.y_test = sk.train_test_split( x, y, test_size=1-train_percent, random_state=42) 
+        self.x_train = self.x_train.to_numpy()
+        self.x_test = self.x_test.to_numpy()
+        self.y_train = self.y_train.to_numpy()
+        self.y_test = self.y_test.to_numpy()
 
     def backwardsPropogation(self):
-        inputDim = 1        # takes variable 'x' 
-        outputDim = 1       # takes variable 'y'
-        learningRate = 0.01 
-        epochs = 100
+        self.inputDim = 1        # takes variable 'x' 
+        self.outputDim = 1       # takes variable 'y'
+        self.learningRate = 0.01 
+        self.epochs = 100
 
-        model = linearRegression(inputDim, outputDim)
+        self.model = linearRegression(self.inputDim, self.outputDim)
         ##### For GPU #######
         if torch.cuda.is_available():
-            model.cuda()
+            self.model.cuda()
 
-        criterion = torch.nn.MSELoss() 
-        optimizer = torch.optim.SGD(model.parameters(), lr=learningRate)
-        for epoch in range(epochs):
+        self.criterion = torch.nn.MSELoss() 
+        self.optimizer = torch.optim.SGD(self.model.parameters(), lr=self.learningRate)
+        for epoch in range(self.epochs):
             # Converting inputs and labels to Variable
             if torch.cuda.is_available():
-                inputs = Variable(torch.from_numpy(x_train).cuda())
-                labels = Variable(torch.from_numpy(y_train).cuda())
+                self.inputs = Variable(torch.from_numpy(self.x_train).cuda())
+                self.labels = Variable(torch.from_numpy(self.y_train).cuda())
             else:
-                inputs = Variable(torch.from_numpy(x_train))
-                labels = Variable(torch.from_numpy(y_train))
+                self.inputs = Variable(torch.from_numpy(self.x_train))
+                self.labels = Variable(torch.from_numpy(self.y_train))
 
             # Clear gradient buffers because we don't want any gradient from previous epoch to carry forward, dont want to cummulate gradients
-            optimizer.zero_grad()
+            self.optimizer.zero_grad()
 
             # get output from the model, given the inputs
-            outputs = model(inputs)
+            self.outputs = self.model(self.inputs)
 
             # get loss for the predicted output
-            loss = criterion(outputs, labels)
-            print(loss)
+            self.loss = criterion(self.outputs, self.labels)
+            print(self.loss)
             # get gradients w.r.t to parameters
-            loss.backward()
+            self.loss.backward()
 
             # update parameters
-            optimizer.step()
+            self.optimizer.step()
 
-            print('epoch {}, loss {}'.format(epoch, loss.item()))
+            print('epoch {}, loss {}'.format(epoch, self.loss.item()))
 
     def forwardPropogation(self):
         with torch.no_grad(): # we don't need gradients in the testing phase
             if torch.cuda.is_available():
-                predicted = model(Variable(torch.from_numpy(x_train).cuda())).cpu().data.numpy()
+                self.predicted = model(Variable(torch.from_numpy(self.x_train).cuda())).cpu().data.numpy()
             else:
-                predicted = model(Variable(torch.from_numpy(x_train))).data.numpy()
-            print(predicted)
+                self.predicted = model(Variable(torch.from_numpy(self.x_train))).data.numpy()
+            print(self.predicted)
 
         plt.clf()
-        plt.plot(x_train, y_train, 'go', label='True data', alpha=0.5)
-        plt.plot(x_train, predicted, '--', label='Predictions', alpha=0.5)
+        plt.plot(self.x_train, self.y_train, 'go', label='True data', alpha=0.5)
+        plt.plot(self.x_train, self.predicted, '--', label='Predictions', alpha=0.5)
         plt.legend(loc='best')
         plt.show()
 
