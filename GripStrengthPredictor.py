@@ -50,14 +50,18 @@ class GripStrengthPredictor:
         # Use int for random_state to make reproducable test/train data. Otherwise, leave null.
         self.x_train, self.x_test, self.y_train, self.y_test = sk.train_test_split( x, y, test_size=1-train_percent, random_state=42) 
         self.x_train = self.x_train.to_numpy()
+        assert not np.any(np.isnan(self.x_train))
         self.x_test = self.x_test.to_numpy()
+        assert not np.any(np.isnan(self.x_test))
         self.y_train = self.y_train.to_numpy()
+        assert not np.any(np.isnan(self.y_train))
         self.y_test = self.y_test.to_numpy()
+        assert not np.any(np.isnan(self.y_test))
 
     def backwardsPropogation(self):
-        self.inputDim = 1        # takes variable 'x' 
-        self.outputDim = 1       # takes variable 'y'
-        self.learningRate = 0.01 
+        self.inputDim = len(self.x_train)      
+        self.outputDim = 1       
+        self.learningRate = 0.001 
         self.epochs = 100
 
         self.model = linearRegression(self.inputDim, self.outputDim)
@@ -83,7 +87,7 @@ class GripStrengthPredictor:
             self.outputs = self.model(self.inputs)
 
             # get loss for the predicted output
-            self.loss = criterion(self.outputs, self.labels)
+            self.loss = self.criterion(self.outputs, self.labels)
             print(self.loss)
             # get gradients w.r.t to parameters
             self.loss.backward()
@@ -118,7 +122,7 @@ class linearRegression(torch.nn.Module):
             return out
 
 def main():
-    a = GripStrengthPredictor('Datasets')
+    a = GripStrengthPredictor('MuscleTrainingData')
     print('Done')
 
 main()
