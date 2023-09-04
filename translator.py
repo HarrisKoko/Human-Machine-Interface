@@ -6,14 +6,11 @@ import sys
 import os
 
 # serial port
-port = '/dev/ttyACM0'
-baud = 9600
+port = 'COM4'
+baud = 115200
 
 # open serial port
 ser = serial.Serial(port, baud, timeout=1)
-
-# wait for arduino to boot
-time.sleep(2)
 
 # read from serial port
 def read():
@@ -28,17 +25,25 @@ def close():
     ser.close()
 
 # main
-if __name__ == '__main__':
+def main():
+    print('Starting translator...')
+    time.sleep(5)
     ser.setDTR(False)
     time.sleep(1)
     ser.flushInput()
     ser.setDTR(True)
-    time.sleep(2)
-    while True:
-        try:
-            sleep(1)
-            write('1')
-            print(read())
-        except KeyboardInterrupt:
-            close()
-            sys.exit()
+    cont = True
+    print("finished booting")
+    try:
+        while cont:
+            time.sleep(0.1)
+            write(b'1')
+            print("wrote to arm")
+    except KeyboardInterrupt:
+        print("KeyboardInterrupt")
+        cont = False
+        close()
+        sys.exit(0)
+
+
+main()
