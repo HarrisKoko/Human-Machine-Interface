@@ -28,6 +28,14 @@ def close():
 def translate(num):
     return (num + 1) * 90
 
+#serial communication protocol
+# A = base; B = shoulder; C = elbow; D = wrist vert; E = wrist rot; F = gripper
+# protocol should send a letter followed by a number from 0 to 100
+
+def send_byte(letter, num):
+    write(letter.encode())
+    write(str(num).encode())
+
 # main
 def main():
     print('Starting translator...')
@@ -41,7 +49,7 @@ def main():
     try:
         while cont:
             time.sleep(0.1)
-            write(b'1')
+            send_byte('A', 67)
             print("wrote to arm")
     except KeyboardInterrupt:
         print("KeyboardInterrupt")
