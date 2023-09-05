@@ -46,7 +46,7 @@ void setup() {
 
 //Accepts an integer between 0 to 100 indicating how "strong" the grip strength should be
 void grip_strength(int strength) {
-  gripper_int = 63 / 100 * strength + 11;
+  gripper_int = 63 / 100 * strength + 10;
 }
 
 void loop() {
