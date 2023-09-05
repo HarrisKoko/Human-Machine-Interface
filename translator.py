@@ -24,6 +24,10 @@ def write(msg):
 def close():
     ser.close()
 
+#translate a number on a -1 to 1 scale to a number on a 0 to 180 scale
+def translate(num):
+    return (num + 1) * 90
+
 # main
 def main():
     print('Starting translator...')
