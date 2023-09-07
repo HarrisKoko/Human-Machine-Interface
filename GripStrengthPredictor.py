@@ -58,58 +58,46 @@ class GripStrengthPredictor:
         self.y_test = self.y_test.to_numpy()
         assert not np.any(np.isnan(self.y_test))
 
-    def backwardsPropogation(self):
-        self.inputDim = len(self.x_train)      
-        self.outputDim = 1       
-        self.learningRate = 0.001 
-        self.epochs = 100
+        self.x_train = torch.from_numpy(self.x_train.astype(np.float32))
+        self.x_test = torch.from_numpy(self.x_test.astype(np.float32))
+        self.y_train = torch.from_numpy(self.y_train.astype(np.float32))
+        self.y_test = torch.from_numpy(self.y_test.astype(np.float32))
 
-        self.model = linearRegression(self.inputDim, self.outputDim)
+    def backwardsPropogation(self):
+        self.model = nn.Linear(482917,1)
+        learningRate = 0.001 
+        epochs = 100
         ##### For GPU #######
-        if torch.cuda.is_available():
-            self.model.cuda()
+        # if torch.cuda.is_available():
+        #     self.model.cuda()
 
         self.criterion = torch.nn.MSELoss() 
-        self.optimizer = torch.optim.SGD(self.model.parameters(), lr=self.learningRate)
-        for epoch in range(self.epochs):
-            # Converting inputs and labels to Variable
-            if torch.cuda.is_available():
-                self.inputs = Variable(torch.from_numpy(self.x_train).cuda())
-                self.labels = Variable(torch.from_numpy(self.y_train).cuda())
-            else:
-                self.inputs = Variable(torch.from_numpy(self.x_train))
-                self.labels = Variable(torch.from_numpy(self.y_train))
+        self.optimizer = torch.optim.SGD(self.model.parameters(), lr=learningRate)
+        for epoch in range(epochs):
+            y_pred = self.model(self.x_train)
+            loss = self.criterion(y_pred,self.y_train)
 
-            # Clear gradient buffers because we don't want any gradient from previous epoch to carry forward, dont want to cummulate gradients
+            loss.backward()
+            self.optimizer.step()
             self.optimizer.zero_grad()
 
-            # get output from the model, given the inputs
-            self.outputs = self.model(self.inputs)
-
-            # get loss for the predicted output
-            self.loss = self.criterion(self.outputs, self.labels)
-            print(self.loss)
-            # get gradients w.r.t to parameters
-            self.loss.backward()
-
-            # update parameters
-            self.optimizer.step()
-
-            print('epoch {}, loss {}'.format(epoch, self.loss.item()))
-
+            if((epoch+1)%10 == 0):
+                print(f'epoch: {epoch+1}, loss = {loss.item():.4f}')
+  
     def forwardPropogation(self):
-        with torch.no_grad(): # we don't need gradients in the testing phase
-            if torch.cuda.is_available():
-                self.predicted = model(Variable(torch.from_numpy(self.x_train).cuda())).cpu().data.numpy()
-            else:
-                self.predicted = model(Variable(torch.from_numpy(self.x_train))).data.numpy()
-            print(self.predicted)
+        # with torch.no_grad(): # we don't need gradients in the testing phase
+        #     if torch.cuda.is_available():
+        #         self.predicted = self.model(Variable(torch.from_numpy(self.x_test.numpy()).cuda())).cpu().data.numpy()
+        #     else:
+        self.predicted = self.model(self.x_test)
+        print(self.predicted)
 
         plt.clf()
         plt.plot(self.x_train, self.y_train, 'go', label='True data', alpha=0.5)
         plt.plot(self.x_train, self.predicted, '--', label='Predictions', alpha=0.5)
         plt.legend(loc='best')
         plt.show()
+        return self.predicted
 
 class linearRegression(torch.nn.Module):
 
@@ -123,6 +111,7 @@ class linearRegression(torch.nn.Module):
 
 def main():
     a = GripStrengthPredictor('MuscleTrainingData')
+    a.forwardPropogation()
     print('Done')
 
 main()
