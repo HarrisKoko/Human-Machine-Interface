@@ -50,14 +50,47 @@ void grip_strength(int strength) {
 }
 
 void loop() {
-  char c;
-  if (Serial.available() > 0) {
-    
-    c = Serial.read();
-  } else {
-    
+  char c='0';
+  int t=0;
+while(0)
+{
+  c='0';
+  while(c=='0')
+  {
+    if (Serial.available() > 0) {
+      
+      c = Serial.read();
+    } 
   }
+      switch(c)
+      {
+          case 'A':
+            while(t==0)
+            {
+              if (Serial.available() > 0) 
+              {
+              t = Serial.read(); // CHECK TO SEE IF THIS ONLY READS ONE CHARACTER
+              }
+            }
+            shoulder_int = t;
+            Serial.print("I received: ");
+            Serial.println(t, DEC);
+            t=0;
+          break;
 
+
+
+            default:
+            base_int = 90;
+            shoulder_int = 45;
+            elbow_int = 180;
+            w_vert_int = 180;
+            w_rot_int = 90;
+            gripper_int = 45;
+
+
+            break;
+      }
   // gripper_int = gripper_int + 1;
   // if(gripper_int > 73) {
   //   gripper_int = 10;
@@ -72,11 +105,8 @@ void loop() {
    M6=gripper degrees. Allowed values from 10 to 73 degrees. 10: the toungue is open, 73: the gripper is closed.
   */
 
-                       //(step delay, M1, M2, M3, M4, M5, M6);
+  //(step delay, M1, M2, M3, M4, M5, M6);
   Braccio.ServoMovement(20, base_int, shoulder_int, elbow_int, w_vert_int, w_rot_int, gripper_int);  
-
-  //Braccio.ServoMovement(20,           180,  165, 0, 0, 180,  10);  
-
-  //Wait 1 second
   delay(10);
+}
 }
