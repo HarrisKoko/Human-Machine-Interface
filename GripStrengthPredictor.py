@@ -21,6 +21,7 @@ from math import sqrt
 import scipy.io as sio
 import os
 from torch.autograd import Variable
+import matplotlib.pyplot as plt
 
 class GripStrengthPredictor:
 
@@ -31,32 +32,34 @@ class GripStrengthPredictor:
         self.backwardsPropogation()
 
     def getDataset(self,path):
-        # Import EMG dataset from Matlab as CSV file
+        # Import EMG dataset from Matlab
         dfs = []
         for filename in os.listdir(path):
             f = os.path.join(path, filename)
             # checking if it is a file
-            if os.path.isfile(f):
+            if os.path.isfile(f) and f != "MuscleTrainingData\ChristinaFiltered.mat":
                 print('Loading file: ',f)
                 mat_file = sio.loadmat(f)
                 last_entry = list(mat_file) [-1]
                 df = pd.DataFrame(mat_file[last_entry])
-                dfs.append(df.drop(columns=2))
-        return pd.concat(dfs)
+                dfs.append(np.delete(df,2,1))
+        return np.concatenate(dfs)
 
     def splitData(self, train_percent = 0.8):
-        x = self.dataset[0]
-        y = self.dataset[1]
+        x = self.dataset[:,0]
+        y = self.dataset[:,1]
+        x = x.reshape(-1, 1)
+        x_norm = MinMaxScaler().fit_transform(x)
         # Use int for random_state to make reproducable test/train data. Otherwise, leave null.
-        self.x_train, self.x_test, self.y_train, self.y_test = sk.train_test_split( x, y, test_size=1-train_percent, random_state=42) 
-        self.x_train = self.x_train.to_numpy()
-        assert not np.any(np.isnan(self.x_train))
-        self.x_test = self.x_test.to_numpy()
-        assert not np.any(np.isnan(self.x_test))
-        self.y_train = self.y_train.to_numpy()
-        assert not np.any(np.isnan(self.y_train))
-        self.y_test = self.y_test.to_numpy()
-        assert not np.any(np.isnan(self.y_test))
+        self.x_train, self.x_test, self.y_train, self.y_test = sk.train_test_split(x_norm, y, test_size=1-train_percent, random_state=42) 
+        # self.x_train = self.x_train.to_numpy()
+        # assert not np.any(np.isnan(self.x_train))
+        # self.x_test = self.x_test.to_numpy()
+        # assert not np.any(np.isnan(self.x_test))
+        # self.y_train = self.y_train.to_numpy()
+        # assert not np.any(np.isnan(self.y_train))
+        # self.y_test = self.y_test.to_numpy()
+        # assert not np.any(np.isnan(self.y_test))
 
     def backwardsPropogation(self):
         self.inputDim = len(self.x_train)      
@@ -100,14 +103,14 @@ class GripStrengthPredictor:
     def forwardPropogation(self):
         with torch.no_grad(): # we don't need gradients in the testing phase
             if torch.cuda.is_available():
-                self.predicted = model(Variable(torch.from_numpy(self.x_train).cuda())).cpu().data.numpy()
+                self.predicted = self.model(Variable(torch.from_numpy(self.x_test).cuda())).cpu().data.numpy()
             else:
-                self.predicted = model(Variable(torch.from_numpy(self.x_train))).data.numpy()
+                self.predicted = self.model(Variable(torch.from_numpy(self.x_test))).data.numpy()
             print(self.predicted)
 
         plt.clf()
-        plt.plot(self.x_train, self.y_train, 'go', label='True data', alpha=0.5)
-        plt.plot(self.x_train, self.predicted, '--', label='Predictions', alpha=0.5)
+        plt.plot(self.x_test, self.y_test, 'go', label='True data', alpha=0.5)
+        plt.plot(self.x_test, self.predicted, '--', label='Predictions', alpha=0.5)
         plt.legend(loc='best')
         plt.show()
 
@@ -123,6 +126,7 @@ class linearRegression(torch.nn.Module):
 
 def main():
     a = GripStrengthPredictor('MuscleTrainingData')
+    a.forwardPropogation()
     print('Done')
 
 main()
