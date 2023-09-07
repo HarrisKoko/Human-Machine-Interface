@@ -41,6 +41,9 @@ void setup() {
   while (!Serial) {
     ; // wait for serial port to connect. Needed for native USB
   }
+  delay(2000);
+
+
   Braccio.begin();
 }
 
@@ -50,50 +53,141 @@ void grip_strength(int strength) {
 }
 
 void loop() {
-  char c;
-  // w_vert_int =90;
-  // elbow_int=90;
-  // shoulder_int=90;
-   Braccio.ServoMovement(20, base_int, shoulder_int, elbow_int, w_vert_int, w_rot_int, gripper_int);
-     delay(5);
-  // if (Serial.available() > 0) {
+Serial.println("Program start");
+int count=1;
+char c='0';
+int t=0;
+while(1)
+{
+  if (Serial.available() > 0) 
+  {
+    c=Serial.read();
+  gripper_int = gripper_int + 10;
+// CHECK TO SEE IF THIS ONLY READS ONE CHARACTER
+  }
+  else
+  {
 
-  //   c = Serial.read();
+  }
+  if(gripper_int > 73) {
+    gripper_int = 10;
+  }
 
 
-  //   w_rot_int=c;
+  Serial.print("Loop#:");
+  Serial.println((int)count);  
+  Serial.print("Value of c");
+  Serial.println((char)c);
+
+  switch(c)
+  {
+    case 'A':
+      while(t==0)
+      {
+        if (Serial.available() > 0) 
+        {
+        t = Serial.read(); // CHECK TO SEE IF THIS ONLY READS ONE CHARACTER
+        }
+      }
+      shoulder_int = t;
+      Serial.print("Shoulder_int: ");
+      Serial.println(t, DEC);
+      t=0;
+    break;
+
+    case 'B':
+      while(t==0)
+      {
+        if (Serial.available() > 0) 
+        {
+        t = Serial.read(); // CHECK TO SEE IF THIS ONLY READS ONE CHARACTER
+        }
+      }
+      elbow_int = t;
+      Serial.print("Elbow_int: ");
+      Serial.println(t, DEC);
+      t=0;
+    break;
+
+    case 'C':
+      while(t==0)
+      {
+        if (Serial.available() > 0) 
+        {
+        t = Serial.read(); // CHECK TO SEE IF THIS ONLY READS ONE CHARACTER
+        }
+      }
+      gripper_int=72;
+      w_vert_int = t;
+      Serial.print("W_vert_int: ");
+      Serial.println(t, DEC);
+      t=0;
+    break;
+
+    default:
+    break;
+
+  }
+//   int t=0;
+//   c='0';
+  
+//   while(c=='0')
+//   {
+//     if (Serial.available() > 0) {
+      
+//       c = Serial.read();
+//     } 
+//   }
+//       switch(c)
+//       {
+//           case 'A':
+//             while(t==0)
+//             {
+//               if (Serial.available() > 0) 
+//               {
+//               t = Serial.read(); // CHECK TO SEE IF THIS ONLY READS ONE CHARACTER
+//               }
+//             }
+//             shoulder_int = t;
+//             Serial.print("I received: ");
+//             Serial.println(t, DEC);
+//             t=0;
+//           break;
 
 
-  // } else {
-    
-  // }
 
-  // // gripper_int = gripper_int + 1;
+//             default:
+//             base_int = 90;
+//             shoulder_int = 45;
+//             elbow_int = 180;
+//             w_vert_int = 180;
+//             w_rot_int = 90;
+//             gripper_int = 45;
+
+
+//             break;
+//       }
+
+
  
-  // // }
-  //  /*
-  //  Step Delay: a milliseconds delay between the movement of each servo.  Allowed values from 10 to 30 msec.
-  //  M1=base degrees. Allowed values from 0 to 180 degrees
-  //  M2=shoulder degrees. Allowed values from 15 to 165 degrees
-  //  M3=elbow degrees. Allowed values from 0 to 180 degrees
-  //  M4=wrist vertical degrees. Allowed values from 0 to 180 degrees
-  //  M5=wrist rotation degrees. Allowed values from 0 to 180 degrees
-  //  M6=gripper degrees. Allowed values from 10 to 73 degrees. 10: the toungue is open, 73: the gripper is closed.
-  // */
 
-  //                      //(step delay, M1, M2, M3, M4, M5, M6);
-  // Braccio.ServoMovement(20, base_int, shoulder_int, elbow_int, w_vert_int, w_rot_int, gripper_int);  
+   /*
+   Step Delay: a milliseconds delay between the movement of each servo.  Allowed values from 10 to 30 msec.
+   M1=base degrees. Allowed values from 0 to 180 degrees
+   M2=shoulder degrees. Allowed values from 15 to 165 degrees
+   M3=elbow degrees. Allowed values from 0 to 180 degrees
+   M4=wrist vertical degrees. Allowed values from 0 to 180 degrees
+   M5=wrist rotation degrees. Allowed values from 0 to 180 degrees
+   M6=gripper degrees. Allowed values from 10 to 73 degrees. 10: the toungue is open, 73: the gripper is closed.
+  */
 
-  // //Braccio.ServoMovement(20,           180,  165, 0, 0, 180,  10);  
+  //(step delay, M1, M2, M3, M4, M5, M6);
+  Braccio.ServoMovement(20, base_int, shoulder_int, elbow_int, w_vert_int, w_rot_int, gripper_int);  
+  delay(10);
 
-  // //Wait 1 second
-  // delay(0);
 
-  //     //w_rot_int++;
-
-  //     if(w_rot_int > 180) {
-  //     w_rot_int = 0;
-  //     }
-       Braccio.ServoMovement(20, base_int, shoulder_int, elbow_int, w_vert_int, w_rot_int, gripper_int);  
-       delay(0);
+  count++;
+  delay(30);
 }
+}
+
