@@ -31,9 +31,9 @@ def write(msg):
 def close():
     ser.close()
 
-#translate a number on a -1 to 1 scale to a number on a 0 to 180 scale
+#translate a number on a 0 to 1 scale to a number on a 0 to 180 scale
 def translate(num):
-    return (num + 1) * 90
+    return num * 180
 
 #serial communication protocol
 # A = base; B = shoulder; C = elbow; D = wrist vert; E = wrist rot; F = gripper
@@ -64,6 +64,13 @@ def main():
     #     cont = False
     #     close()
     #     sys.exit(0)
+
+# load the csv and read each line 
+def load_csv(filename):
+    with open(filename, 'r') as f:
+        for line in f:
+            translate(line)
+            send_byte('A', line)
 
 # create a route that accepts and saves a csv file
 @app.route('/csv/<filename>', methods=['POST'])
