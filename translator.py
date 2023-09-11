@@ -4,10 +4,17 @@ import serial
 import time
 import sys
 import os
+from flask import Flask
+from flask import request
+
+app = Flask(__name__)
+app.config['UPLOAD_FOLDER'] = 'csv'
 
 # serial port
 port = 'COM4'
 baud = 115200
+
+cont = False
 
 # open serial port
 ser = serial.Serial(port, baud, timeout=1)
@@ -44,18 +51,26 @@ def main():
     time.sleep(1)
     ser.flushInput()
     ser.setDTR(True)
+    global cont
     cont = True
     print("finished booting")
-    try:
-        while cont:
-            time.sleep(0.1)
-            send_byte('A', 67)
-            print("wrote to arm")
-    except KeyboardInterrupt:
-        print("KeyboardInterrupt")
-        cont = False
-        close()
-        sys.exit(0)
+    # try:
+    #     while cont:
+    #         time.sleep(0.1)
+    #         send_byte('A', 67)
+    #         print("wrote to arm")
+    # except KeyboardInterrupt:
+    #     print("KeyboardInterrupt")
+    #     cont = False
+    #     close()
+    #     sys.exit(0)
 
+# create a route that accepts and saves a csv file
+@app.route('/csv/<filename>', methods=['POST'])
+def upload_csv(filename):
+    # save the file
+    f = request.files['file']
+    f.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+    return 'file uploaded successfully'
 
 main()
