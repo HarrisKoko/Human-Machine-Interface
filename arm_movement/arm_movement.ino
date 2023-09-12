@@ -20,12 +20,12 @@ Servo wrist_rot;
 Servo wrist_ver;
 Servo gripper;
 
-int base_int = 90;
-int shoulder_int = 45;
-int elbow_int = 180;
-int w_vert_int = 180;
-int w_rot_int = 90;
-int gripper_int = 45;
+int base_int = 90; // Case D
+int shoulder_int = 45; //Case A
+int elbow_int = 180; //Case B
+int w_vert_int = 180; //Case C
+int w_rot_int = 90; //Case E
+int gripper_int = 45; //Case F
 
 
 void setup() {
@@ -64,7 +64,7 @@ while(1)
     c=Serial.read(); 
     // C represents the part of the arm that will be moving, the arm will idle in it's default position until 
     // it receives a command via the serial port
-  gripper_int = gripper_int + 10; // Debug code to verify arm is receiving messages, this can be removed later
+  
   }
   else
   {
@@ -119,9 +119,50 @@ while(1)
         t = Serial.read(); // 
         }
       }
-      gripper_int=72;
       w_vert_int = t;
       Serial.print("W_vert_int: ");
+      Serial.println(t, DEC);
+      t=0;
+    break;
+
+    case 'D': // Case for shoulder joint
+      while(t==0)
+      {
+        if (Serial.available() > 0) 
+        {
+        t = Serial.read(); // This only reads one character, limits the range of motion to 256 instead of 360
+        }
+      }
+      base_int = t;
+      Serial.print("Base_int: ");
+      Serial.println(t, DEC);
+      t=0;
+    break;
+
+     case 'E': // Case for shoulder joint
+      while(t==0)
+      {
+        if (Serial.available() > 0) 
+        {
+        t = Serial.read(); // This only reads one character, limits the range of motion to 256 instead of 360
+        }
+      }
+      w_rot_int = t;
+      Serial.print("W_rot_int: ");
+      Serial.println(t, DEC);
+      t=0;
+    break;
+
+    case 'F': // Case for shoulder joint
+      while(t==0)
+      {
+        if (Serial.available() > 0) 
+        {
+        t = Serial.read(); // This only reads one character, limits the range of motion to 256 instead of 360
+        }
+      }
+      gripper_int = t;
+      Serial.print("gripper_int: ");
       Serial.println(t, DEC);
       t=0;
     break;
@@ -147,7 +188,7 @@ while(1)
 
 
   count++;
-  delay(30);
+  delay(1000);
 }
 }
 
