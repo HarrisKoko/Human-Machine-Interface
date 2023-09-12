@@ -29,12 +29,12 @@ class GripStrengthPrediction:
         for filename in os.listdir(path):
             f = os.path.join(path, filename)
             # checking if it is a file
-            if os.path.isfile(f):
+            if os.path.isfile(f) and (f == "MuscleTrainingData\DrI20High.mat" or f == "MuscleTrainingData\DrI5High.mat"):
                 print('Loading file: ',f)
                 mat_file = sio.loadmat(f)
                 last_entry = list(mat_file) [-1]
                 df = pd.DataFrame(mat_file[last_entry])
-                dfs.append(df.drop(columns=2))
+                dfs.append(df.drop(columns=0))
         data = pd.concat(dfs)
         data = data.to_numpy()
         X = data[:,0]
@@ -44,7 +44,7 @@ class GripStrengthPrediction:
         # plt.legend(loc='best')
         #plt.show()
 
-        X_train, X_test, y_train, y_test = sk.train_test_split( X, y, test_size=0.3, random_state=23) 
+        X_train, X_test, y_train, y_test = sk.train_test_split( X, y, test_size=0.4, random_state=23) 
         X_train = np.array(X_train).reshape(-1,1)
         X_test = np.array(X_test).reshape(-1,1)
         return X_train,X_test,y_train,y_test
@@ -57,8 +57,8 @@ class GripStrengthPrediction:
         c = lr.intercept_
         m = lr.coef_
 
-        print(m)
-        print(c)
+        print("Intercept: ",m)
+        print("Slope: ",c)
 
         predictions = m*X_test+c
         
@@ -78,8 +78,8 @@ class GripStrengthPrediction:
 
     def armPercentile(self,predictions):
         print(predictions)
-        scaler = MinMaxScaler(feature_range = (-1,1))
-        percentiles = scaler.fit_transform(predictions) 
+        scaler = MinMaxScaler(feature_range = (0,1))
+        percentiles = scaler.fit_transform(predictions)
         print(percentiles)
         return percentiles
 
