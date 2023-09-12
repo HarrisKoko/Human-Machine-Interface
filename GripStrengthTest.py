@@ -29,11 +29,12 @@ class GripStrengthPrediction:
         for filename in os.listdir(path):
             f = os.path.join(path, filename)
             # checking if it is a file
-            if os.path.isfile(f) and (f == "MuscleTrainingData\DrI20High.mat" or f == "MuscleTrainingData\DrI5High.mat"):
+            if os.path.isfile(f) and (f == "MuscleTrainingData\DrI20High.mat" ):
                 print('Loading file: ',f)
                 mat_file = sio.loadmat(f)
                 last_entry = list(mat_file) [-1]
                 df = pd.DataFrame(mat_file[last_entry])
+                #df.to_csv('%s/file.csv'%(path), index = False)
                 dfs.append(df.drop(columns=0))
         data = pd.concat(dfs)
         data = data.to_numpy()
@@ -42,7 +43,7 @@ class GripStrengthPrediction:
         # plt.clf()
         # plt.plot(X,y, 'go', label='True data', alpha=0.5)
         # plt.legend(loc='best')
-        #plt.show()
+        # plt.show()
 
         X_train, X_test, y_train, y_test = sk.train_test_split( X, y, test_size=0.4, random_state=23) 
         X_train = np.array(X_train).reshape(-1,1)
@@ -57,18 +58,18 @@ class GripStrengthPrediction:
         c = lr.intercept_
         m = lr.coef_
 
-        print("Intercept: ",m)
-        print("Slope: ",c)
+        print("Slope: ",m)
+        print("Intercept: ",c)
 
         predictions = m*X_test+c
         
-        plt.clf()
-        plt.plot(X_test, y_test, 'go', label='True Force', alpha=0.5)
-        plt.plot(X_test, predictions, '--', label='Force Predictions', alpha=0.5)
-        plt.xlabel("EMG Data")
-        plt.ylabel("Force")
-        plt.legend(loc='best')
-        plt.show()
+        # plt.clf()
+        # plt.plot(X_test, y_test, 'go', label='True Force', alpha=0.5)
+        # plt.plot(X_test, predictions, '--', label='Force Predictions', alpha=0.5)
+        # plt.xlabel("EMG Data")
+        # plt.ylabel("Force")
+        # plt.legend(loc='best')
+        # #plt.show()
 
         print("Mean Absolute Error: ",skm.mean_absolute_error(y_test,predictions))
         print("Mean Absolute Error: ",skm.mean_absolute_percentage_error(y_test,predictions))
@@ -88,5 +89,7 @@ def main():
     X_train,X_test,y_train,y_test = predictor.getData("MuscleTrainingData")
     predictions = predictor.getFit(X_train,X_test,y_train,y_test)
     armMovements = predictor.armPercentile(predictions)
+    df = pd.DataFrame(armMovements)
+    df.to_csv("arm_movement/ArmMovements.csv",index=False,header=False)
     
 main()
