@@ -20,12 +20,12 @@ Servo wrist_rot;
 Servo wrist_ver;
 Servo gripper;
 
-int base_int = 90;
-int shoulder_int = 45;
-int elbow_int = 180;
-int w_vert_int = 180;
-int w_rot_int = 90;
-int gripper_int = 45;
+int base_int = 90; // Case D
+int shoulder_int = 45; //Case A
+int elbow_int = 180; //Case B
+int w_vert_int = 180; //Case C
+int w_rot_int = 90; //Case E
+int gripper_int = 45; //Case F
 
 
 void setup() {
@@ -61,15 +61,16 @@ while(1)
 {
   if (Serial.available() > 0) 
   {
-    c=Serial.read();
-  gripper_int = gripper_int + 10;
-// CHECK TO SEE IF THIS ONLY READS ONE CHARACTER
+    c=Serial.read(); 
+    // C represents the part of the arm that will be moving, the arm will idle in it's default position until 
+    // it receives a command via the serial port
+  
   }
   else
   {
 
   }
-  if(gripper_int > 73) {
+  if(gripper_int > 73) { // More random debug code that can be removed later
     gripper_int = 10;
   }
 
@@ -78,15 +79,16 @@ while(1)
   Serial.println((int)count);  
   Serial.print("Value of c");
   Serial.println((char)c);
-
+  //Outputs to verify that the code is progressing through the loops and is checking the serial port,
+  //also verifies the code is progressing but taking no action when no command is received
   switch(c)
   {
-    case 'A':
+    case 'A': // Case for shoulder joint
       while(t==0)
       {
         if (Serial.available() > 0) 
         {
-        t = Serial.read(); // CHECK TO SEE IF THIS ONLY READS ONE CHARACTER
+        t = Serial.read(); // This only reads one character, limits the range of motion to 256 instead of 360
         }
       }
       shoulder_int = t;
@@ -95,12 +97,12 @@ while(1)
       t=0;
     break;
 
-    case 'B':
+    case 'B': // case for elbow joint
       while(t==0)
       {
         if (Serial.available() > 0) 
         {
-        t = Serial.read(); // CHECK TO SEE IF THIS ONLY READS ONE CHARACTER
+        t = Serial.read(); // 
         }
       }
       elbow_int = t;
@@ -109,17 +111,58 @@ while(1)
       t=0;
     break;
 
-    case 'C':
+    case 'C': // case for wrist joint ( non-rotational )
       while(t==0)
       {
         if (Serial.available() > 0) 
         {
-        t = Serial.read(); // CHECK TO SEE IF THIS ONLY READS ONE CHARACTER
+        t = Serial.read(); // 
         }
       }
-      gripper_int=72;
       w_vert_int = t;
       Serial.print("W_vert_int: ");
+      Serial.println(t, DEC);
+      t=0;
+    break;
+
+    case 'D': // Case for shoulder joint
+      while(t==0)
+      {
+        if (Serial.available() > 0) 
+        {
+        t = Serial.read(); // This only reads one character, limits the range of motion to 256 instead of 360
+        }
+      }
+      base_int = t;
+      Serial.print("Base_int: ");
+      Serial.println(t, DEC);
+      t=0;
+    break;
+
+     case 'E': // Case for shoulder joint
+      while(t==0)
+      {
+        if (Serial.available() > 0) 
+        {
+        t = Serial.read(); // This only reads one character, limits the range of motion to 256 instead of 360
+        }
+      }
+      w_rot_int = t;
+      Serial.print("W_rot_int: ");
+      Serial.println(t, DEC);
+      t=0;
+    break;
+
+    case 'F': // Case for shoulder joint
+      while(t==0)
+      {
+        if (Serial.available() > 0) 
+        {
+        t = Serial.read(); // This only reads one character, limits the range of motion to 256 instead of 360
+        }
+      }
+      gripper_int = t;
+      Serial.print("gripper_int: ");
       Serial.println(t, DEC);
       t=0;
     break;
@@ -128,48 +171,6 @@ while(1)
     break;
 
   }
-//   int t=0;
-//   c='0';
-  
-//   while(c=='0')
-//   {
-//     if (Serial.available() > 0) {
-      
-//       c = Serial.read();
-//     } 
-//   }
-//       switch(c)
-//       {
-//           case 'A':
-//             while(t==0)
-//             {
-//               if (Serial.available() > 0) 
-//               {
-//               t = Serial.read(); // CHECK TO SEE IF THIS ONLY READS ONE CHARACTER
-//               }
-//             }
-//             shoulder_int = t;
-//             Serial.print("I received: ");
-//             Serial.println(t, DEC);
-//             t=0;
-//           break;
-
-
-
-//             default:
-//             base_int = 90;
-//             shoulder_int = 45;
-//             elbow_int = 180;
-//             w_vert_int = 180;
-//             w_rot_int = 90;
-//             gripper_int = 45;
-
-
-//             break;
-//       }
-
-
- 
 
    /*
    Step Delay: a milliseconds delay between the movement of each servo.  Allowed values from 10 to 30 msec.
@@ -187,7 +188,7 @@ while(1)
 
 
   count++;
-  delay(30);
+  delay(1000);
 }
 }
 

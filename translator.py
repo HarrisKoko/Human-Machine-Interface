@@ -6,18 +6,21 @@ import sys
 import os
 from flask import Flask
 from flask import request
+import signal
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'csv'
 
 # serial port
-port = 'COM4'
+port = "COM4"
 baud = 115200
 
 cont = False
 
 # open serial port
+print("opening serial port")
 ser = serial.Serial(port, baud, timeout=1)
+print("opened serial port")
 
 # read from serial port
 def read():
@@ -42,6 +45,14 @@ def translate(num):
 def send_byte(letter, num):
     write(letter.encode())
     write(str(num).encode())
+
+time.sleep(5)
+ser.setDTR(False)
+time.sleep(5)
+print("flushing input")
+ser.flushInput()
+ser.setDTR(True)
+print("Done")
 
 # main
 def main():
@@ -80,4 +91,20 @@ def upload_csv(filename):
     f.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
     return 'file uploaded successfully'
 
-main()
+# GET - takes in a letter A through E as well as a number
+@app.route('/<letter>/<num>', methods=['GET'])
+def get(letter, num):
+    print("run")
+    ascii_num = chr(int(num))
+    send_byte(letter, ascii_num)
+    return 'sent'
+
+def handle_signal(signum, frame):
+    print(f'handling signal {signum}')
+    # do cleanup
+    close()
+    sys.exit(0)
+
+signal.signal(signal.SIGINT, handle_signal)
+
+#main()
