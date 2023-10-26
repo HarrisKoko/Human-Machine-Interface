@@ -1,15 +1,3 @@
-
-/*
-  simpleMovements.ino
-
- This  sketch simpleMovements shows how they move each servo motor of Braccio
-
- Created on 18 Nov 2015
- by Andrea Martino
-
- This example is in the public domain.
- */
-
 #include <Braccio.h>
 #include <Servo.h>
 
@@ -37,7 +25,7 @@ void setup() {
   //Wrist vertical (M4): 180 degrees
   //Wrist rotation (M5): 90 degrees
   //gripper (M6): 10 degrees
-  Serial.begin(115200);
+  Serial.begin(9600);
   while (!Serial) {
     ; // wait for serial port to connect. Needed for native USB
   }
@@ -62,6 +50,7 @@ while(1)
   if (Serial.available() > 0) 
   {
     c=Serial.read(); 
+    t=Serial.read();
     // C represents the part of the arm that will be moving, the arm will idle in it's default position until 
     // it receives a command via the serial port
   
@@ -75,102 +64,61 @@ while(1)
   }
 
 
-  Serial.print("Loop#:");
-  Serial.println((int)count);  
-  Serial.print("Value of c");
-  Serial.println((char)c);
+  if(c != '0'){
+    Serial.print("Loop#:");
+    Serial.println((int)count);  
+    Serial.print("Value of c");
+    Serial.println((char)c);
+  }
   //Outputs to verify that the code is progressing through the loops and is checking the serial port,
   //also verifies the code is progressing but taking no action when no command is received
   switch(c)
   {
     case 'A': // Case for shoulder joint
-      while(t==0)
-      {
-        if (Serial.available() > 0) 
-        {
-        t = Serial.read(); // This only reads one character, limits the range of motion to 256 instead of 360
-        }
-      }
       shoulder_int = t;
+      shoulder.write(t);
       Serial.print("Shoulder_int: ");
       Serial.println(t, DEC);
-      t=0;
     break;
 
     case 'B': // case for elbow joint
-      while(t==0)
-      {
-        if (Serial.available() > 0) 
-        {
-        t = Serial.read(); // 
-        }
-      }
       elbow_int = t;
+      elbow.write(t);
       Serial.print("Elbow_int: ");
       Serial.println(t, DEC);
-      t=0;
     break;
 
     case 'C': // case for wrist joint ( non-rotational )
-      while(t==0)
-      {
-        if (Serial.available() > 0) 
-        {
-        t = Serial.read(); // 
-        }
-      }
       w_vert_int = t;
+      wrist_ver.write(t);
       Serial.print("W_vert_int: ");
       Serial.println(t, DEC);
-      t=0;
     break;
 
     case 'D': // Case for shoulder joint
-      while(t==0)
-      {
-        if (Serial.available() > 0) 
-        {
-        t = Serial.read(); // This only reads one character, limits the range of motion to 256 instead of 360
-        }
-      }
       base_int = t;
+      base.write(t);
       Serial.print("Base_int: ");
       Serial.println(t, DEC);
-      t=0;
     break;
 
      case 'E': // Case for shoulder joint
-      while(t==0)
-      {
-        if (Serial.available() > 0) 
-        {
-        t = Serial.read(); // This only reads one character, limits the range of motion to 256 instead of 360
-        }
-      }
-      w_rot_int = t;
+      wrist_rot.write(t);
       Serial.print("W_rot_int: ");
       Serial.println(t, DEC);
-      t=0;
     break;
 
     case 'F': // Case for shoulder joint
-      while(t==0)
-      {
-        if (Serial.available() > 0) 
-        {
-        t = Serial.read(); // This only reads one character, limits the range of motion to 256 instead of 360
-        }
-      }
-      gripper_int = t;
+      gripper.write(t);
       Serial.print("gripper_int: ");
       Serial.println(t, DEC);
-      t=0;
     break;
-
     default:
     break;
-
   }
+  delay(500);
+  t=0;
+  c='0';
 
    /*
    Step Delay: a milliseconds delay between the movement of each servo.  Allowed values from 10 to 30 msec.
@@ -182,13 +130,9 @@ while(1)
    M6=gripper degrees. Allowed values from 10 to 73 degrees. 10: the toungue is open, 73: the gripper is closed.
   */
 
-  //(step delay, M1, M2, M3, M4, M5, M6);
-  Braccio.ServoMovement(20, base_int, shoulder_int, elbow_int, w_vert_int, w_rot_int, gripper_int);  
-  delay(10);
-
-
+  //(step delay, M1, M2, M3, M4, M5, M6);  
+  
   count++;
-  delay(1000);
 }
 }
 
