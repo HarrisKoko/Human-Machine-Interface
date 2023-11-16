@@ -69,7 +69,7 @@ def send_byte(letter, num):
 
 def listen():
     while(True):
-        # print((read()))
+        print((read()))
         time.sleep(sleep_time)
 
 # def communicate():

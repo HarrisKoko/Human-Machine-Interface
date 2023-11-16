@@ -34,18 +34,18 @@ def plot_and_read():
     #y = mx + b
     m = (datay[699] - datay[0]) / (timestamps[699] - timestamps[0])
     b = datay[0] - m * timestamps[0]
-    for i in range(len(datay)):
-        datay[i] = datay[i] - (m * timestamps[i] + b)
+    # for i in range(len(datay)):
+    #     datay[i] = datay[i] - (m * timestamps[i] + b)
 
-    sums = [0]
-    old_time = timestamps[0]
-    for i in range(1,len(timestamps)):
-        val = 1/2 * (datay[i] + datay[i-1]) * (timestamps[i] - old_time)
-        sums.append(sums[i-1] + val)
-        old_time = timestamps[i]
+    # sums = [0]
+    # old_time = timestamps[0]
+    # for i in range(1,len(timestamps)):
+    #     val = 1/2 * (datay[i] + datay[i-1]) * (timestamps[i] - old_time)
+    #     sums.append(sums[i-1] + val)
+    #     old_time = timestamps[i]
 
     #plt.plot(timestamps, datax)
-    plt.plot(datax)
+    plt.plot(datay)
     #plt.plot(timestamps, dataz)
     #plt.plot(timestamps, data)
     plt.show()

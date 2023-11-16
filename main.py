@@ -15,16 +15,75 @@ def start_arm():
     init_arm()
     thing()
 
-def send_to_arm(max, min, val, letter):
+def send_to_arm(max, min, val, letter, inverse):
     # convert val to a value between 0 and 180 using the range [min, max]
     # send the value to the arm
     if(max == min):
         return
     range = abs(max - min)
     new_val = abs(val - min) / range * 180
+    if inverse:
+        new_val = 180 - new_val
     print(max, min, val, int(new_val))
     ascii_num = chr(int(new_val))
     send_byte(letter, ascii_num)
+
+def determine_drift(timestamps, data):
+    # determine the drift of the data
+    # return the drift in the form (m, b)
+    # where y = mx + b
+    total_slope_sum = 0
+    total_slope_count = 0
+    for i in range(1, len(data)):
+        if timestamps[i] - timestamps[i-1] > 0:
+            total_slope_count += 1
+            total_slope_sum += (data[i] - data[i-1]) / (timestamps[i] - timestamps[i-1])
+    m = total_slope_sum / (total_slope_count - 1)
+    b = data[0] - m * timestamps[0]
+    print("approx: " + str((data[len(data) - 1] - data[0]) / (timestamps[len(timestamps) - 1] - timestamps[0])))
+
+    return (m, b)
+
+def calibrate(intlet):
+    print("Remain still for 5 seconds")
+    init_sample, init_timestamp = intlet.pull_sample()
+    timestamps = [init_timestamp]
+    datax = [init_sample[0]]
+    datay = [init_sample[1]]
+    dataz = [init_sample[2]]
+    sumx = [0]
+    sumy = [0]
+    sumz = [0]
+    #store data to arrays
+    while(timestamps[len(timestamps) - 1] - init_timestamp < 5):
+        sample, new_timestamp = intlet.pull_sample()
+        datax.append(sample[0])
+        datay.append(sample[1])
+        dataz.append(sample[2])
+        timestamps.append(new_timestamp)
+    #retroactively integrate
+    for i in range(1, len(datax)):
+        valx = 1/2 * (datax[i] + datax[i-1]) * (timestamps[i] - timestamps[i-1])
+        sumx.append(sumx[len(sumx)-1] + valx)
+        valy = 1/2 * (datay[i] + datay[i-1]) * (timestamps[i] - timestamps[i-1])
+        sumy.append(sumy[len(sumy)-1] + valy)
+        valz = 1/2 * (dataz[i] + dataz[i-1]) * (timestamps[i] - timestamps[i-1])
+        sumz.append(sumz[len(sumz)-1] + valz)
+    timestamps.pop(0)
+    print(timestamps)
+    sumx.pop(0)
+    sumy.pop(0)
+    sumz.pop(0)
+    #determine the respective drifts
+    x_drift = determine_drift(timestamps, sumx)
+    y_drift = determine_drift(timestamps, sumy)
+    z_drift = determine_drift(timestamps, sumz)
+    print(timestamps[len(timestamps) - 1] - timestamps[1])
+    print(sumy[1], sumy[len(sumy) - 1])
+    print(x_drift, y_drift, z_drift)
+    # plt.plot(timestamps, sumy)
+    # plt.show()
+    return (x_drift, y_drift, z_drift)
 
 def main():
     print("starting arm...")
@@ -32,24 +91,33 @@ def main():
     print("waiting for arm to boot...")
     time.sleep(30)
     print("arm booted")
-    # first resolve an EEG stream on the lab network
+    # first resolve an GYRO stream on the lab network
     print("looking for an GYRO stream...")
     streams = resolve_stream('type', 'GYRO')
-
+    print("resolving stream...")
     # create a new inlet to read from the stream
     inlet = StreamInlet(streams[0])
+    #calibrate
+    print("calibrating...")
+    calibration = calibrate(inlet)
+    print("calibrated")
+    #wait for arm to boot
+    
     run = True
-    data1 = [0]
-    data2 = [0]
-    data3 = [0]
-    sum1 = [0]
-    sum2 = [0]
-    sum3 = [0]
+    init_sample, init_timestamp = inlet.pull_sample()
+    datax = [init_sample[0]]
+    datay = [init_sample[1]]
+    dataz = [init_sample[2]]
+    timestamps = [init_timestamp]
+    sumx = [0]
+    sumy = [0]
+    sumz = [0]
     max_and_minx = (0,0)
     max_and_miny = (0,0)
     max_and_minz = (0,0)
-    old_time = 0
+    old_time = init_timestamp
     old_time_write = 0
+
     while run:
         # get a new sample (you can also omit the timestamp part if you're not
         # interested in it)
@@ -62,35 +130,45 @@ def main():
             sample[1] = 0
         if sample[2] < override_val and sample[2] > -override_val:
             sample[2] = 0
-        val = quad(integrand, old_time, timestamp, args=(data1[len(data1)-1], sample[0]))
-        sum1.append(sum1[len(sum1)-1] + val[0])
-        val = quad(integrand, old_time, timestamp, args=(data2[len(data2)-1], sample[1]))
-        sum2.append(sum2[len(sum2)-1] + val[0])
-        val = quad(integrand, old_time, timestamp, args=(data3[len(data3)-1], sample[2]))
-        sum3.append(sum3[len(sum3)-1] + val[0])
-        data1.append(sample[0])
-        data2.append(sample[1])
-        data3.append(sample[2])
-
-        if(sum1[len(sum1) - 1] > max_and_minx[0]):
-            max_and_minx = (sum1[len(sum1) - 1], max_and_minx[1])
-        if(sum1[len(sum1) - 1] < max_and_minx[1]):
-            max_and_minx = (max_and_minx[0], sum1[len(sum1) - 1])
         
-        if(sum2[len(sum2) - 1] > max_and_miny[0]):
-            max_and_miny = (sum2[len(sum2) - 1], max_and_miny[1])
-        if(sum2[len(sum2) - 1] < max_and_miny[1]):
-            max_and_miny = (max_and_miny[0], sum2[len(sum2) - 1])
-        
-        if(sum3[len(sum3) - 1] > max_and_minz[0]):
-            max_and_minz = (sum3[len(sum3) - 1], max_and_minz[1])
-        if(sum3[len(sum3) - 1] < max_and_minz[1]):
-            max_and_minz = (max_and_minz[0], sum3[len(sum3) - 1])
+        valx = quad(integrand, old_time, timestamp, args=(datax[len(datax)-1], sample[0]))
+        sumx.append(sumx[len(sumx)-1] + valx[0])
+        valx = valx[0] - calibration[0][0] * (timestamp - old_time)
 
-        #if(len(data1) > 1):
-            #sum1.append(1/2 * (data1[len(data1) - 2] + data1[len(data1) - 1]) * (timestamp - old_time))
-            #sum2.append(1/2 * (data1[len(data1) - 2] + data1[len(data1) - 1]) * (timestamp - old_time))
-            #sum3.append(1/2 * (data1[len(data1) - 2] + data1[len(data1) - 1]) * (timestamp - old_time))
+        valy = 1/2 * (datay[len(datay) - 1] + sample[1]) * (timestamp - old_time) 
+
+        valy = valy - calibration[1][0] * (timestamp - old_time)
+
+        sumy.append(sumy[len(sumy)-1] + valy)
+
+        valz = quad(integrand, old_time, timestamp, args=(dataz[len(dataz)-1], sample[2]))
+        valz = valz[0] - calibration[2][0] * (timestamp - old_time)
+
+        sumz.append(sumz[len(sumz)-1] + valz)
+        datax.append(sample[0])
+        datay.append(sample[1])
+        dataz.append(sample[2])
+        timestamps.append(timestamp)
+
+        if(sumx[len(sumx) - 1] > max_and_minx[0]):
+            max_and_minx = (sumx[len(sumx) - 1], max_and_minx[1])
+        if(sumx[len(sumx) - 1] < max_and_minx[1]):
+            max_and_minx = (max_and_minx[0], sumx[len(sumx) - 1])
+        
+        if(sumy[len(sumy) - 1] > max_and_miny[0]):
+            max_and_miny = (sumy[len(sumy) - 1], max_and_miny[1])
+        if(sumy[len(sumy) - 1] < max_and_miny[1]):
+            max_and_miny = (max_and_miny[0], sumy[len(sumy) - 1])
+        
+        if(sumz[len(sumz) - 1] > max_and_minz[0]):
+            max_and_minz = (sumz[len(sumz) - 1], max_and_minz[1])
+        if(sumz[len(sumz) - 1] < max_and_minz[1]):
+            max_and_minz = (max_and_minz[0], sumz[len(sumz) - 1])
+
+        #if(len(datax) > 1):
+            #sumx.append(1/2 * (datax[len(datax) - 2] + datax[len(datax) - 1]) * (timestamp - old_time))
+            #sumy.append(1/2 * (datay[len(datay) - 2] + datay[len(datay) - 1]) * (timestamp - old_time))
+            #sumz.append(1/2 * (dataz[len(dataz) - 2] + dataz[len(dataz) - 1]) * (timestamp - old_time))
         old_time = timestamp
         #detect a keypress and set run to false
         if msvcrt.kbhit():
@@ -98,19 +176,19 @@ def main():
             print("key pressed")
             run = False
         
-        # only send_to_arm every 1/2 second
         if(timestamp - old_time_write > 0.2):
-            send_to_arm(max_and_minz[0], max_and_minz[1], sum3[len(sum3) - 1], 'D')
+            send_to_arm(max_and_minz[0], max_and_minz[1], sumz[len(sumz) - 1], 'D', True)
+            send_to_arm(max_and_miny[0], max_and_miny[1], sumy[len(sumy) - 1], 'E', False)
             old_time_write = timestamp
 
     #plot
-    # plt.plot(data1)
-    # plt.plot(data2)
-    # plt.plot(data3)
+    # plt.plot(datax)
+    # plt.plot(datay)
+    # plt.plot(dataz)
     #plt.show()
-    # plt.plot(sum1)
-    # plt.plot(sum2)
-    plt.plot(sum3)
+    plt.plot(timestamps, sumy)
+    plt.show()
+    plt.plot(timestamps, sumz)
     plt.show()
 
 def handle_signal(signum, frame):
