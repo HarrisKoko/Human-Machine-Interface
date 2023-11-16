@@ -13,16 +13,27 @@ import threading
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'csv'
 
+sleep_time = 0.3
+
 # serial port
 port = "COM4"
 baud = 9600
 
 cont = False
 
-# open serial port
-print("opening serial port")
-ser = serial.Serial(port, baud, timeout=0)
-print("opened serial port")
+def init_arm():
+    global ser
+    # open serial port
+    print("opening serial port")
+    ser = serial.Serial(port, baud, writeTimeout=0)
+    print("opened serial port")
+    time.sleep(2)
+    ser.setDTR(False)
+    time.sleep(2)
+    print("flushing input")
+    ser.flushInput()
+    ser.setDTR(True)
+    print("Done")
 
 # read from serial port
 def read():
@@ -45,29 +56,21 @@ def translate(num):
 # protocol should send a letter followed by a number from 0 to 100
 
 def send_byte(letter, num):
-    print("sending byte")
-    print(num)
+    # print("sending byte")
+    # print(num)
     encoded_num = num.encode()
     if(sys.getsizeof(encoded_num) > 34):
         #trim off the first byte
-        print("trimming")
+        #print("trimming")
         encoded_num = encoded_num[1:]
-        print(encoded_num)
+        #print(encoded_num)
     write(letter.encode())
     write(encoded_num)
 
-time.sleep(5)
-ser.setDTR(False)
-time.sleep(5)
-print("flushing input")
-ser.flushInput()
-ser.setDTR(True)
-print("Done")
-
 def listen():
     while(True):
-        print((read()))
-        time.sleep(0.5)
+        # print((read()))
+        time.sleep(sleep_time)
 
 # def communicate():
 #     # while(True):
@@ -75,11 +78,11 @@ def listen():
 #     print()
 
 # main
-def main():
+def thing():
     print('Starting translator...')
-    time.sleep(5)
+    time.sleep(2)
     ser.setDTR(False)
-    time.sleep(1)
+    time.sleep(2)
     ser.flushInput()
     ser.setDTR(True)
     global cont
@@ -113,23 +116,23 @@ def random_pos():
     time.sleep(0.5)
 
 # load the csv and read each line 
-def load_csv(filename):
-    with open(filename, 'r') as f:
-        for line in f:
-            #if line.replace(".", "").isdigit():
-            out = translate(float(line))
-            ascii_num = chr(int(out))
-            rand = random.random()
-            if rand < 0.25:
-                ch = 'F'
-            elif rand < 0.5:
-                ch = 'E'
-            elif rand < 0.75:
-                ch = 'D'
-            else:
-                ch = 'C'
-            send_byte(ch, ascii_num)
-            time.sleep(0.5)
+# def load_csv(filename):
+#     with open(filename, 'r') as f:
+#         for line in f:
+#             #if line.replace(".", "").isdigit():
+#             out = translate(float(line))
+#             ascii_num = chr(int(out))
+#             rand = random.random()
+#             if rand < 0.25:
+#                 ch = 'F'
+#             elif rand < 0.5:
+#                 ch = 'E'
+#             elif rand < 0.75:
+#                 ch = 'D'
+#             else:
+#                 ch = 'C'
+#             send_byte(ch, ascii_num)
+#             time.sleep(sleep_time)
             #else:
                 #print("other csv case")
 
@@ -162,4 +165,5 @@ def handle_signal(signum, frame):
 
 signal.signal(signal.SIGINT, handle_signal)
 
-main()
+# init_arm()
+# thing()
