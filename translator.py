@@ -13,7 +13,7 @@ import threading
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'csv'
 
-sleep_time = 0.3
+sleep_time = 0.2
 
 # serial port
 port = "COM4"
@@ -116,33 +116,32 @@ def random_pos():
     time.sleep(0.5)
 
 # load the csv and read each line 
-# def load_csv(filename):
-#     with open(filename, 'r') as f:
-#         for line in f:
-#             #if line.replace(".", "").isdigit():
-#             out = translate(float(line))
-#             ascii_num = chr(int(out))
-#             rand = random.random()
-#             if rand < 0.25:
-#                 ch = 'F'
-#             elif rand < 0.5:
-#                 ch = 'E'
-#             elif rand < 0.75:
-#                 ch = 'D'
-#             else:
-#                 ch = 'C'
-#             send_byte(ch, ascii_num)
-#             time.sleep(sleep_time)
-            #else:
-                #print("other csv case")
+def load_csv(filename):
+    with open(filename, 'r') as f:
+        for line in f:
+            #if line.replace(".", "").isdigit():
+            out = translate(float(line))
+            ascii_num = chr(int(out))
+            rand = random.random()
+            # if rand < 0.25:
+            #     ch = 'F'
+            # elif rand < 0.5:
+            #     ch = 'E'
+            # elif rand < 0.75:
+            #     ch = 'D'
+            # else:
+            #     ch = 'C'
+            ch = 'F'
+            send_byte(ch, ascii_num)
+            time.sleep(sleep_time)
 
 # create a route that accepts and saves a csv file
-# @app.route('/csv/<filename>', methods=['POST'])
-# def upload_csv(filename):
-#     # save the file
-#     f = request.files['file']
-#     f.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-#     return 'file uploaded successfully'
+@app.route('/csv/<filename>', methods=['POST'])
+def upload_csv(filename):
+    # save the file
+    f = request.files['file']
+    f.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+    return 'file uploaded successfully'
 
 @app.route('/load/<filename>', methods=['GET'])
 def load(filename):
@@ -165,5 +164,5 @@ def handle_signal(signum, frame):
 
 signal.signal(signal.SIGINT, handle_signal)
 
-# init_arm()
-# thing()
+init_arm()
+thing()
