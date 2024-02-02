@@ -173,28 +173,29 @@ def main():
         # interested in it)
         sample, timestamp = inlet.pull_sample()
         #print(timestamp, sample)
-        override_val = 10
+        override_val = 0
         if sample[0] < override_val + calibration[0][0] and sample[0] > -override_val + calibration[0][0]:
             sample[0] = 0
         if sample[1] < override_val + calibration[1][0] and sample[1] > -override_val + calibration[1][0]:
             sample[1] = 0
         if sample[2] < override_val + calibration[2][0] and sample[2] > -override_val + calibration[2][0]:
             sample[2] = 0
-        
+
         valx = quad(integrand, old_time, timestamp, args=(datax[len(datax)-1], sample[0]))
         sumx.append(sumx[len(sumx)-1] + valx[0])
-        valx = valx[0] # - calibration[0][0] * (timestamp - old_time)
+        valx = valx[0] - calibration[0][0] * (timestamp - old_time)
 
         valy = 1/2 * (datay[len(datay) - 1] + sample[1]) * (timestamp - old_time) 
 
-        valy = valy # - calibration[1][0] * (timestamp - old_time)
+        valy = valy - calibration[1][0] * (timestamp - old_time)
 
         sumy.append(sumy[len(sumy)-1] + valy)
 
         valz = quad(integrand, old_time, timestamp, args=(dataz[len(dataz)-1], sample[2]))
-        valz = valz[0] # - calibration[2][0] * (timestamp - old_time)
+        valz = valz[0] - calibration[2][0] * (timestamp - old_time)
 
         sumz.append(sumz[len(sumz)-1] + valz)
+
         datax.append(sample[0])
         datay.append(sample[1])
         dataz.append(sample[2])
@@ -239,9 +240,11 @@ def main():
     #plot
     # plt.plot(datax)
     # plt.plot(datay)
-    plt.plot(dataz)
+    plt.plot(timestamps, datax)
     plt.show()
-    plt.plot(timestamps, sumy)
+    plt.plot(timestamps, sumx)
+    plt.show()
+    plt.plot(timestamps, dataz)
     plt.show()
     plt.plot(timestamps, sumz)
     plt.show()

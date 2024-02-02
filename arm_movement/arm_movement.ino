@@ -36,84 +36,43 @@ void setup() {
 }
 
 void loop() {
-Serial.println("Program start");
 int count=1;
 char c='0';
 int t='0';
-while(1)
-{
-  if (Serial.available() > 1) 
-  {
-    c=Serial.read();
-    Serial.print("C: ");
-    Serial.println(c); 
-    t=Serial.read();
-    Serial.print("T: ");
-    Serial.println(t);
-    // C represents the part of the arm that will be moving, the arm will idle in it's default position until 
-    // it receives a command via the serial port
-  
+while(1) {
+  if (Serial.available() > 1) {
+    c=Serial.read(); t=Serial.read();
   }
-  else
-  {
-
-  }
-  if(gripper_int > 73) { // More random debug code that can be removed later
-    gripper_int = 10;
-  }
-
-
-  // if(c != '0'){
-  //   Serial.print("Loop#:");
-  //   Serial.println((int)count);  
-  //   Serial.print("Value of c");
-  //   Serial.println((char)c);
-  // }
-  //Outputs to verify that the code is progressing through the loops and is checking the serial port,
-  //also verifies the code is progressing but taking no action when no command is received
-  switch(c)
-  {
+  if(gripper_int > 73) { gripper_int = 10; }
+  switch(c) {
     case 'A': // Case for shoulder joint
       shoulder_int = t;
       shoulder.write(t);
-      // Serial.print("Shoulder_int: ");
-      // Serial.println(t, DEC);
     break;
 
     case 'B': // case for elbow joint
       elbow_int = t;
       elbow.write(t);
-      // Serial.print("Elbow_int: ");
-      // Serial.println(t, DEC);
     break;
 
     case 'C': // case for wrist joint ( non-rotational )
       w_vert_int = t;
       wrist_ver.write(t);
-      // Serial.print("W_vert_int: ");
-      // Serial.println(t, DEC);
     break;
 
     case 'D': // Case for shoulder joint
       base_int = t;
       base.write(t);
-      // Serial.print("Base_int: ");
-      // Serial.println(t, DEC);
     break;
 
      case 'E': // Case for shoulder joint
       wrist_rot.write(t);
-      // Serial.print("W_rot_int: ");
-      // Serial.println(t, DEC);
     break;
 
     case 'F': // Case for shoulder joint
       gripper.write(t);
-      // Serial.print("gripper_int: ");
-      // Serial.println(t, DEC);
     break;
     default:
-      //Serial.print("Error");
     break;
   }
   t=0;
